@@ -1,4 +1,5 @@
 const std = @import("std");
+const options = @import("options");
 
 pub fn binomial(n: usize, k: usize) usize {
     var result: usize = n;
@@ -9,45 +10,91 @@ pub fn binomial(n: usize, k: usize) usize {
     return result;
 }
 
-pub const letters = &.{
-    'a',
-    'b',
-    'c',
-    'ĉ',
-    'd',
-    'e',
-    'f',
-    'g',
-    'ĝ',
-    'h',
-    'ĥ',
-    'i',
-    'j',
-    'ĵ',
-    'k',
-    'l',
-    'm',
-    'n',
-    'o',
-    'p',
-    'q',
-    'r',
-    's',
-    'ŝ',
-    't',
-    'u',
-    'ŭ',
-    'v',
-    'z',
+pub const letters = switch (options.language) {
+    .esperanto => &.{
+        'a',
+        'b',
+        'c',
+        'ĉ',
+        'd',
+        'e',
+        'f',
+        'g',
+        'ĝ',
+        'h',
+        'ĥ',
+        'i',
+        'j',
+        'ĵ',
+        'k',
+        'l',
+        'm',
+        'n',
+        'o',
+        'p',
+        'q',
+        'r',
+        's',
+        'ŝ',
+        't',
+        'u',
+        'ŭ',
+        'v',
+        'z',
+    },
+    .russian => &.{
+        'а',
+        'б',
+        'в',
+        'г',
+        'д',
+        'е',
+        'ё',
+        'ж',
+        'з',
+        'и',
+        'й',
+        'к',
+        'л',
+        'м',
+        'н',
+        'о',
+        'п',
+        'р',
+        'с',
+        'т',
+        'у',
+        'ф',
+        'х',
+        'ц',
+        'ч',
+        'ш',
+        'щ',
+        'ъ',
+        'ы',
+        'ь',
+        'э',
+        'ю',
+        'я',
+        '\'',
+        '-',
+    },
 };
 
-const used_words = 2;
-const word_length = 6;
+const IntType = std.meta.Int(.unsigned, letters.len);
+
+const used_words = options.word_count;
+const word_length = options.word_length;
 
 pub fn main() !void {
     const allocator = std.heap.c_allocator;
 
-    const words_orig = try @import("load.zig").loadWords(allocator, "words.csv", word_length);
+    std.debug.print("settings: {d} words, {d} characters long\n", .{ used_words, word_length });
+
+    const words_orig = switch (options.language) {
+        .esperanto => try @import("load.zig").loadWordsEo(allocator, "words.csv", word_length),
+        .russian => try @import("load.zig").loadWordsRu(allocator, "russian.csv", word_length),
+    };
 
     std.debug.print("loaded {d} words\n", .{words_orig.len});
 
@@ -58,12 +105,12 @@ pub fn main() !void {
 
     blk: for (words_orig, 0..) |word, i| {
         _ = i;
-        var num: u32 = 0;
+        var num: IntType = 0;
         var iter = std.unicode.Utf8Iterator{ .bytes = word, .i = 0 };
         var j: usize = 0;
         while (iter.nextCodepoint()) |codepoint| {
             if (std.mem.indexOf(u21, letters, &.{codepoint})) |letter_index| {
-                const bit = @shlExact(@as(u32, 1), @intCast(letter_index));
+                const bit = @shlExact(@as(IntType, 1), @intCast(letter_index));
                 //If the bit is already set, skip this word (eg. if the word has duped letters)
                 if (num & bit != 0) continue :blk;
                 //Set the bit
@@ -81,7 +128,7 @@ pub fn main() !void {
 
     std.debug.print("pruned down to {d} words\n", .{words.items.len});
 
-    var words_small: []u32 = try allocator.alloc(u32, words.items.len);
+    var words_small: []IntType = try allocator.alloc(IntType, words.items.len);
     defer allocator.free(words_small);
     @memset(words_small, 0);
 
@@ -90,7 +137,7 @@ pub fn main() !void {
         var j: usize = 0;
         while (iter.nextCodepoint()) |codepoint| {
             if (std.mem.indexOf(u21, letters, &.{codepoint})) |letter_index| {
-                words_small[i] |= @shlExact(@as(u32, 1), @intCast(letter_index));
+                words_small[i] |= @shlExact(@as(IntType, 1), @intCast(letter_index));
             } else {
                 std.debug.print("{u}\n", .{codepoint});
                 @panic("unknown letter?");
@@ -98,6 +145,7 @@ pub fn main() !void {
 
             j += 1;
         }
+        // std.debug.print("a {s}\n", .{words.items[i]});
     }
 
     //Get the amount of combinations required
@@ -128,7 +176,7 @@ pub fn main() !void {
 
     loop: while (true) {
         // std.debug.print("{d}\n", .{combination});
-        var total: u32 = 0;
+        var total: IntType = 0;
 
         for (&combination, 0..) |item, i| {
             total |= words_small[item];
