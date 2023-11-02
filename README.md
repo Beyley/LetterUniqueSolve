@@ -128,3 +128,10 @@ found set /bĵura/konst/ŝveli/
 found set /bĵura/konst/veldi/
 ...
 ```
+
+## Running
+
+Download zig `0.12.0-dev.1350+91e117697`
+
+`zig build -Doptimize=ReleaseFast -Dlanguage=esperanto -Dword_count=3 -Dword_length=5 run`
+`zig build -Doptimize=ReleaseFast -Dlanguage=russian -Dword_count=3 -Dword_length=5 run`
