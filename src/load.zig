@@ -14,10 +14,8 @@ pub fn loadWordsRu(allocator: std.mem.Allocator, path: []const u8, word_length: 
 
     var lines_iter = std.mem.split(u8, data, "\n");
     while (lines_iter.next()) |line| {
-        //Skip any lines with more than 3 ,
-        // if (std.mem.count(u8, line, ",") != 3) continue;
-
         var comma_iter = std.mem.split(u8, line, ",");
+
         //UNCOMMENT THIS FOR FULL DATASET
         // while (comma_iter.next()) |str| {
         //     var trimmed = std.mem.trim(u8, str, " \t\n\r");
@@ -38,6 +36,7 @@ pub fn loadWordsRu(allocator: std.mem.Allocator, path: []const u8, word_length: 
 
         //     try list.append(try allocator.dupe(u8, trimmed));
         // }
+
         var trimmed = std.mem.trim(u8, comma_iter.next() orelse "", " \t\n\r");
 
         if (try std.unicode.utf8CountCodepoints(trimmed) != word_length) continue;
@@ -55,18 +54,6 @@ pub fn loadWordsRu(allocator: std.mem.Allocator, path: []const u8, word_length: 
         }
 
         try list.append(try allocator.dupe(u8, trimmed));
-        // _ = comma_iter.next(); //ignore raw esperanto
-        // _ = comma_iter.next(); //ignore raw lower esperanto
-        // var esperanto = comma_iter.next() orelse unreachable;
-
-        // var num_str = comma_iter.next() orelse unreachable;
-        // // std.debug.print("num str {s} esperanto {s}\n", .{ num_str, esperanto });
-        // var num = try std.fmt.parseInt(usize, num_str, 10);
-
-        // //If the word is not the length we are looking for, ignore it
-        // if (num != word_length) continue;
-
-        // try list.append(try allocator.dupe(u8, esperanto));
     }
 
     return list.toOwnedSlice();

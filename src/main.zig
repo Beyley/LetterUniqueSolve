@@ -156,7 +156,6 @@ pub fn main() !void {
     //A list of all the found combinations
     var found = std.ArrayList([used_words]usize).init(allocator);
     defer found.deinit();
-    // try found.ensureTotalCapacity(combination_count);
 
     var combination: [used_words]usize = undefined;
     //Get the first lexographic set
@@ -235,14 +234,6 @@ pub fn main() !void {
             break;
         }
     }
-
-    // for (found.items) |item| {
-    //     std.debug.print("found set /", .{});
-    //     for (&item) |found_idx| {
-    //         std.debug.print("{s}/", .{words[found_idx]});
-    //     }
-    //     std.debug.print("\n", .{});
-    // }
 }
 
 fn next_combination(comptime used_items: comptime_int, combination: *[used_items]usize, items_count: usize) bool {
